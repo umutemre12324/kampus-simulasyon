@@ -1,24 +1,838 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grup 5</title>
-  <link rel="stylesheet" href="/frontend/assets/nav.css">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Akıllı Sınıf Web Paneli</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111315;
+      --surface: #191d20;
+      --surface-2: #20262a;
+      --surface-3: #272f33;
+      --line: #343c40;
+      --text: #f3f6f4;
+      --muted: #a8b2ad;
+      --green: #43c59e;
+      --cyan: #4fb7d8;
+      --amber: #f0b44c;
+      --coral: #ef6f6c;
+      --violet: #9b8cff;
+      --shadow: 0 24px 70px rgba(0, 0, 0, .32);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(67, 197, 158, .08), transparent 260px),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    button, input { font: inherit; }
+
+    .shell {
+      width: min(1440px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 28px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 16px 0 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #07110e;
+      font-weight: 900;
+      box-shadow: var(--shadow);
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-1px); border-color: rgba(255, 255, 255, .25); }
+    .btn:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+    .btn.primary { background: var(--green); color: #07110e; border-color: transparent; font-weight: 800; }
+    .btn.danger { background: rgba(239, 111, 108, .14); border-color: rgba(239, 111, 108, .45); color: #ffd7d6; }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr .8fr .8fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .status-box, .metric, .panel, .sensor, .log, .timeline-item {
+      border: 1px solid var(--line);
+      background: rgba(25, 29, 32, .92);
+      border-radius: 8px;
+    }
+
+    .status-box {
+      padding: 14px;
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .big {
+      margin-top: 7px;
+      font-size: 24px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(255, 255, 255, .07);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .pill.live { color: #07110e; background: var(--green); font-weight: 800; }
+    .pill.warn { color: #2a1700; background: var(--amber); font-weight: 800; }
+    .pill.err { color: #3a0808; background: var(--coral); font-weight: 800; }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 390px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .metric {
+      min-height: 128px;
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric::after {
+      content: "";
+      position: absolute;
+      inset: auto 12px 12px auto;
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .metric .value {
+      margin-top: 18px;
+      font-size: clamp(25px, 4vw, 36px);
+      font-weight: 900;
+      line-height: .95;
+    }
+
+    .metric .unit {
+      margin-left: 5px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .metric.green .value { color: var(--green); }
+    .metric.cyan .value { color: var(--cyan); }
+    .metric.amber .value { color: var(--amber); }
+    .metric.coral .value { color: var(--coral); }
+    .metric.violet .value { color: var(--violet); }
+
+    .panel {
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .room {
+      min-height: 310px;
+      display: grid;
+      grid-template-columns: 1fr 170px;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .room-map {
+      position: relative;
+      min-height: 280px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.045) 1px, transparent 1px),
+        #15191b;
+      background-size: 48px 48px;
+      overflow: hidden;
+    }
+
+    .zone {
+      position: absolute;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.045);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .zone.board { left: 4%; top: 6%; width: 92%; height: 36px; border-color: rgba(79,183,216,.4); color: #bfeeff; }
+    .zone.door { right: 4%; bottom: 7%; width: 72px; height: 78px; border-color: rgba(240,180,76,.4); color: #ffe4ad; }
+    .zone.bin { left: 6%; bottom: 8%; width: 92px; height: 92px; border-color: rgba(67,197,158,.45); color: #c9ffef; }
+
+    .desk {
+      position: absolute;
+      width: 72px;
+      height: 42px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,.13);
+      background: rgba(155, 140, 255, .12);
+    }
+
+    .d1 { left: 18%; top: 28%; } .d2 { left: 38%; top: 28%; } .d3 { left: 58%; top: 28%; }
+    .d4 { left: 18%; top: 48%; } .d5 { left: 38%; top: 48%; } .d6 { left: 58%; top: 48%; }
+    .d7 { left: 28%; top: 68%; } .d8 { left: 50%; top: 68%; }
+
+    .person-cloud {
+      position: absolute;
+      inset: 58px 18px 18px;
+      pointer-events: none;
+    }
+
+    .person {
+      position: absolute;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 18px rgba(67, 197, 158, .9);
+    }
+
+    .room-side {
+      display: grid;
+      gap: 10px;
+    }
+
+    .sensor {
+      padding: 12px;
+      min-height: 82px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .sensor strong { font-size: 15px; }
+    .sensor.on { border-color: rgba(67, 197, 158, .6); background: rgba(67, 197, 158, .08); }
+    .sensor.off { color: var(--muted); }
+
+    .bin-wrap {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .bin-visual {
+      width: 126px;
+      height: 160px;
+      border: 2px solid rgba(255,255,255,.24);
+      border-top-width: 10px;
+      border-radius: 8px 8px 12px 12px;
+      position: relative;
+      overflow: hidden;
+      background: #121516;
+      margin: 0 auto;
+    }
+
+    .bin-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 0%;
+      background: linear-gradient(180deg, var(--green), #2d9f7e);
+      transition: height .3s ease, background .3s ease;
+    }
+
+    .progress {
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: var(--green);
+      transition: width .3s ease, background .3s ease;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      border-radius: 8px;
+      min-height: 36px;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    .tab.active { color: #07110e; background: var(--cyan); border-color: transparent; font-weight: 800; }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      max-height: 360px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      background: #15191b;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      font-weight: 700;
+    }
+
+    .log {
+      height: 510px;
+      padding: 12px;
+      overflow: auto;
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      background: #0d0f10;
+      color: #b9cec8;
+    }
+
+    .log-line { border-bottom: 1px solid rgba(255,255,255,.04); padding: 3px 0; }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    .timeline-item {
+      padding: 11px 12px;
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .timeline-item time { color: var(--amber); font-weight: 800; }
+    .timeline-item div { color: var(--muted); line-height: 1.35; }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: min(420px, calc(100% - 36px));
+      border: 1px solid rgba(239, 111, 108, .55);
+      background: #261716;
+      color: #ffd9d7;
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: none;
+      z-index: 20;
+    }
+
+    .toast.show { display: block; }
+
+    @media (max-width: 1100px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .status-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .shell { width: min(100% - 20px, 1440px); padding-top: 10px; }
+      .topbar { grid-template-columns: 1fr; }
+      .actions { justify-content: stretch; }
+      .btn { flex: 1 1 150px; justify-content: center; }
+      .metrics, .status-strip, .room, .bin-wrap { grid-template-columns: 1fr; }
+      .room-side { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .sensor { min-height: 74px; padding: 10px; }
+      .metric { min-height: 112px; }
+      .log { height: 320px; }
+    }
+  </style>
 </head>
 <body>
-  <!-- Grup 5: Bu dosya size ait. Serbestçe düzenleyin.
-       Üst bar ve sol menü otomatik gelir (nav.js); siz aşağıdaki <main> içini doldurun.
-       Backend'i çağırmak için örnek:
-         fetch('/api/proje1/simulate', { method: 'POST' })
-           .then(r => r.json()).then(console.log);
-       API yapısı için örnek demolara bakın: /frontend/grup8/ ve /frontend/ornek-proje3/
-  -->
-  <main>
-    <h1>Grup 5</h1>
-    <p>Projenizi buradan geliştirmeye başlayın.</p>
+  <main class="shell">
+    <header class="topbar">
+      <section class="brand" aria-label="Uygulama başlığı">
+        <div class="mark">SC</div>
+        <div>
+          <h1>Akıllı Sınıf Kontrol Merkezi</h1>
+          <div class="subtitle">Dijital ikiz simülasyonu, enerji analitiği, geri dönüşüm takibi ve PIR hareket sensörleri</div>
+        </div>
+      </section>
+      <section class="actions" aria-label="Simülasyon kontrolleri">
+        <button class="btn primary" id="startBtn">▶ Başlat</button>
+        <button class="btn danger" id="stopBtn" disabled>■ Durdur</button>
+        <button class="btn" id="historyBtn">↻ Geçmişi Yenile</button>
+      </section>
+    </header>
+
+    <section class="status-strip" aria-label="Sistem durumu">
+      <div class="status-box">
+        <div>
+          <div class="label">Simülasyon Durumu</div>
+          <div class="big" id="stateText">Beklemede</div>
+        </div>
+        <span class="pill" id="livePill">Hazır</span>
+      </div>
+      <div class="status-box">
+        <div>
+          <div class="label">Oturum ID</div>
+          <div class="big" id="sessionId">-</div>
+        </div>
+      </div>
+      <div class="status-box">
+        <div>
+          <div class="label">Simülasyon Saati</div>
+          <div class="big" id="simClock">0:00</div>
+        </div>
+      </div>
+      <div class="status-box">
+        <div>
+          <div class="label">Veri Akışı</div>
+          <div class="big" id="streamState">Bağlanıyor</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-grid">
+      <div>
+        <section class="metrics" aria-label="Anlık metrikler">
+          <article class="metric green"><div class="label">Aktif Kişi</div><div class="value"><span id="people">0</span><span class="unit">kişi</span></div></article>
+          <article class="metric amber"><div class="label">Açık Işık</div><div class="value"><span id="lights">0</span><span class="unit">/ 4</span></div></article>
+          <article class="metric cyan"><div class="label">Sıcaklık</div><div class="value"><span id="temp">0.0</span><span class="unit">°C</span></div></article>
+          <article class="metric coral"><div class="label">CO2</div><div class="value"><span id="co2">400</span><span class="unit">ppm</span></div></article>
+          <article class="metric violet"><div class="label">Toplam Enerji</div><div class="value"><span id="energy">0.00</span><span class="unit">Wh</span></div></article>
+          <article class="metric cyan"><div class="label">Anlık Akım</div><div class="value"><span id="current">0.000</span><span class="unit">A</span></div></article>
+          <article class="metric amber"><div class="label">Havalandırma</div><div class="value"><span id="hvac">Kapalı</span></div></article>
+          <article class="metric green"><div class="label">Toplam Atık</div><div class="value"><span id="wasteTotal">0</span><span class="unit">adet</span></div></article>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Sınıf Dijital İkizi</h2>
+            <span class="pill" id="roomMode">Sensörler hazır</span>
+          </div>
+          <div class="room">
+            <div class="room-map" aria-label="Sınıf yerleşim görseli">
+              <div class="zone board">Akıllı Tahta</div>
+              <div class="zone door">Kapı</div>
+              <div class="zone bin">Geri Dönüşüm</div>
+              <div class="desk d1"></div><div class="desk d2"></div><div class="desk d3"></div>
+              <div class="desk d4"></div><div class="desk d5"></div><div class="desk d6"></div>
+              <div class="desk d7"></div><div class="desk d8"></div>
+              <div class="person-cloud" id="personCloud"></div>
+            </div>
+            <div class="room-side">
+              <div class="sensor off" id="pir1"><strong>PIR_1</strong><span>Hareket yok</span></div>
+              <div class="sensor off" id="pir2"><strong>PIR_2</strong><span>Hareket yok</span></div>
+              <div class="sensor off" id="pir3"><strong>PIR_3</strong><span>Hareket yok</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Geri Dönüşüm Kutusu</h2>
+            <span class="pill" id="binText">0 / 40 atık</span>
+          </div>
+          <div class="bin-wrap">
+            <div class="bin-visual" aria-hidden="true"><div class="bin-fill" id="binFill"></div></div>
+            <div>
+              <div class="label">Doluluk Seviyesi</div>
+              <div class="big" id="binPercent">0%</div>
+              <div class="progress" aria-label="Kutu doluluk oranı"><span id="binProgress"></span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Veritabanı Geçmişi</h2>
+            <span class="pill" id="historySession">Son oturum</span>
+          </div>
+          <div class="tabs">
+            <button class="tab active" data-tab="ortam">Ortam Ölçümleri</button>
+            <button class="tab" data-tab="geri">Geri Dönüşüm</button>
+            <button class="tab" data-tab="pir">PIR Olayları</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead id="historyHead"></thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <aside>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Olay Zaman Çizelgesi</h2>
+            <span class="pill" id="eventCount">0 olay</span>
+          </div>
+          <div class="timeline" id="timeline"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Konsol Günlüğü</h2>
+            <span class="pill">Canlı</span>
+          </div>
+          <div class="log" id="log"></div>
+        </section>
+      </aside>
+    </section>
   </main>
-  <script src="/frontend/assets/nav.js"></script>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmt = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
+    const state = { activeTab: "ortam", history: null, eventCount: 0 };
+
+    const fields = {
+      people: $("people"), lights: $("lights"), temp: $("temp"), co2: $("co2"),
+      energy: $("energy"), current: $("current"), hvac: $("hvac"), wasteTotal: $("wasteTotal")
+    };
+
+    function asNumber(value, fallback = 0) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function formatClock(seconds) {
+      const total = Math.max(0, Math.floor(asNumber(seconds)));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      return `${h}:${String(m).padStart(2, "0")}`;
+    }
+
+    function showToast(message) {
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 6500);
+    }
+
+    function setRunning(running) {
+      $("startBtn").disabled = running;
+      $("stopBtn").disabled = !running;
+      $("livePill").className = running ? "pill live" : "pill";
+      $("livePill").textContent = running ? "Canlı" : "Hazır";
+    }
+
+    function updateStatus(data) {
+      const running = Boolean(data.calisiyor);
+      setRunning(running);
+      $("stateText").textContent = data.durum_metni || "Beklemede";
+      $("sessionId").textContent = data.oturum_id ?? "-";
+      $("simClock").textContent = formatClock(data.sim_zamani);
+
+      fields.people.textContent = asNumber(data.aktif_kisi);
+      fields.lights.textContent = asNumber(data.acik_isik);
+      fields.temp.textContent = asNumber(data.sicaklik_c).toFixed(1);
+      fields.co2.textContent = Math.round(asNumber(data.co2_ppm));
+      fields.energy.textContent = asNumber(data.toplam_enerji_wh).toFixed(2);
+      fields.current.textContent = asNumber(data.akim_a).toFixed(3);
+      fields.hvac.textContent = data.havalandirma ? "Açık" : "Kapalı";
+      fields.wasteTotal.textContent = asNumber(data.toplam_atik);
+
+      updateRoom(asNumber(data.aktif_kisi), data.pir_durum || {});
+      updateBin(asNumber(data.kutudaki_atik));
+
+      if (data.son_hata) showToast(data.son_hata);
+      if (Array.isArray(data.loglar) && !$("log").children.length) {
+        data.loglar.forEach(addLogLine);
+      }
+    }
+
+    function updateRoom(people, pir) {
+      const cloud = $("personCloud");
+      cloud.innerHTML = "";
+      const shown = Math.min(people, 80);
+      for (let i = 0; i < shown; i += 1) {
+        const dot = document.createElement("span");
+        dot.className = "person";
+        const x = 4 + ((i * 23) % 88);
+        const y = 8 + ((i * 37) % 82);
+        dot.style.left = `${x}%`;
+        dot.style.top = `${y}%`;
+        dot.style.opacity = String(0.45 + ((i % 5) * 0.1));
+        cloud.appendChild(dot);
+      }
+      $("roomMode").textContent = people > 0 ? "Sınıf aktif" : "Sınıf boş";
+
+      ["PIR_1", "PIR_2", "PIR_3"].forEach((id, index) => {
+        const el = $(`pir${index + 1}`);
+        const on = Boolean(pir[id]);
+        el.classList.toggle("on", on);
+        el.classList.toggle("off", !on);
+        el.querySelector("span").textContent = on ? "Hareket algılandı" : "Hareket yok";
+      });
+    }
+
+    function updateBin(count) {
+      const percent = Math.min(100, Math.round((count / 40) * 100));
+      const color = percent >= 90 ? "var(--coral)" : percent >= 65 ? "var(--amber)" : "var(--green)";
+      $("binFill").style.height = `${percent}%`;
+      $("binFill").style.background = color;
+      $("binProgress").style.width = `${percent}%`;
+      $("binProgress").style.background = color;
+      $("binPercent").textContent = `${percent}%`;
+      $("binText").textContent = `${count} / 40 atık`;
+      $("binText").className = percent >= 90 ? "pill err" : percent >= 65 ? "pill warn" : "pill";
+    }
+
+    function addLogLine(line) {
+      const log = $("log");
+      const item = document.createElement("div");
+      item.className = "log-line";
+      item.textContent = line || "";
+      log.appendChild(item);
+      while (log.children.length > 220) log.removeChild(log.firstChild);
+      log.scrollTop = log.scrollHeight;
+
+      if (/Çöp atıldı|Kutu boşaltıldı|taştı|SAAT RAPORU/.test(line)) {
+        addTimeline(line);
+      }
+    }
+
+    function addTimeline(line) {
+      const timeline = $("timeline");
+      const match = line.match(/\[([\d.]+)\s*sn\]|\|\s*Zaman:\s*([\d.]+)s/);
+      const seconds = match ? (match[1] || match[2]) : "-";
+      const item = document.createElement("article");
+      item.className = "timeline-item";
+      item.innerHTML = `<time>${seconds}s</time><div></div>`;
+      item.querySelector("div").textContent = line.replace(/\s+/g, " ").trim();
+      timeline.prepend(item);
+      state.eventCount += 1;
+      $("eventCount").textContent = `${state.eventCount} olay`;
+      while (timeline.children.length > 40) timeline.removeChild(timeline.lastChild);
+    }
+
+    async function post(url) {
+      const response = await fetch(url, { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) throw new Error(data.message || "İşlem tamamlanamadı.");
+      return data;
+    }
+
+    async function refreshHistory() {
+      const response = await fetch("/api/history");
+      const payload = await response.json();
+      if (!payload.ok) throw new Error(payload.message || "Geçmiş okunamadı.");
+      state.history = payload.data;
+      $("historySession").textContent = payload.data.oturum_id ? `Oturum ${payload.data.oturum_id}` : "Kayıt yok";
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const data = state.history || {};
+      const maps = {
+        ortam: {
+          head: ["Zaman", "Kişi", "Işık", "HVAC", "Akım", "Sıcaklık", "CO2", "Enerji"],
+          rows: (data.ortam || []).map(r => [
+            `${fmt.format(r.sim_zamani_sn)} sn`, r.aktif_kisi_sayisi, r.acik_isik_adedi,
+            r.havalandirma_durumu ? "Açık" : "Kapalı", `${fmt.format(r.anlik_akim_a)} A`,
+            `${fmt.format(r.sicaklik_c)} °C`, `${fmt.format(r.co2_ppm)} ppm`, `${fmt.format(r.toplam_enerji_wh)} Wh`
+          ])
+        },
+        geri: {
+          head: ["Zaman", "Olay", "Kutudaki Atık", "Yığın Yüksekliği"],
+          rows: (data.geri_donusum || []).map(r => [
+            `${fmt.format(r.sim_zamani_sn)} sn`, r.olay_tipi, r.kutudaki_atik_adedi ?? "-",
+            r.yigin_yuksekligi_m == null ? "-" : `${fmt.format(r.yigin_yuksekligi_m)} m`
+          ])
+        },
+        pir: {
+          head: ["Zaman", "Sensör", "Hareket", "Doluluk Tahmini"],
+          rows: (data.pir || []).map(r => [
+            `${fmt.format(r.sim_zamani_sn)} sn`, r.sensor_id,
+            r.hareket_algilandi ? "Algılandı" : "Yok", r.oda_doluluk_tahmini
+          ])
+        }
+      };
+      const table = maps[state.activeTab];
+      $("historyHead").innerHTML = `<tr>${table.head.map(h => `<th>${h}</th>`).join("")}</tr>`;
+      $("historyBody").innerHTML = table.rows.length
+        ? table.rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("")
+        : `<tr><td colspan="${table.head.length}">Henüz gösterilecek kayıt yok.</td></tr>`;
+    }
+
+    $("startBtn").addEventListener("click", async () => {
+      try {
+        const data = await post("/api/start");
+        updateStatus(data.status);
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+
+    $("stopBtn").addEventListener("click", async () => {
+      try {
+        const data = await post("/api/stop");
+        updateStatus(data.status);
+        await refreshHistory().catch(() => {});
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+
+    $("historyBtn").addEventListener("click", () => refreshHistory().catch(err => showToast(err.message)));
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+        btn.classList.add("active");
+        state.activeTab = btn.dataset.tab;
+        renderHistory();
+      });
+    });
+
+    function connectEvents() {
+      const events = new EventSource("/api/events");
+      events.addEventListener("open", () => { $("streamState").textContent = "Bağlı"; });
+      events.addEventListener("status", event => updateStatus(JSON.parse(event.data)));
+      events.addEventListener("log", event => addLogLine(JSON.parse(event.data).line));
+      events.addEventListener("error", event => {
+        $("streamState").textContent = "Koptu";
+        if (event.data) showToast(JSON.parse(event.data).message || "Akış hatası.");
+      });
+      events.onerror = () => { $("streamState").textContent = "Yenileniyor"; };
+    }
+
+    fetch("/api/status").then(r => r.json()).then(updateStatus).catch(() => showToast("Web sunucusuna ulaşılamadı."));
+    refreshHistory().catch(() => {});
+    connectEvents();
+  </script>
 </body>
 </html>
